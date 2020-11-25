@@ -1,0 +1,6 @@
+.idea/*
+.DS_Store
+tmp
+work
+dist
+vendor
