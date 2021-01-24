@@ -803,7 +803,7 @@ elements:
   symbol: "Ce"
   element: "Cerium"
   origin: "the then recently discovered asteroid Ceres, considered a planet at the time"
-#  group: "-"
+  group: -4 # not a group, but used as coordinates in the UI grid
   period: 6
   weight: 140.116(1)<sup id="cite_ref-fn2_9-26" class="reference"><a href="#cite_note-fn2-9">[III]</sup>
   density: 6.77
@@ -817,7 +817,7 @@ elements:
   symbol: "Pr"
   element: "Praseodymium"
   origin: "the Greek <i>praseios didymos</i> meaning 'green twin'"
-#  group: "-"
+  group: -5 # not a group, but used as coordinates in the UI grid
   period: 6
   weight: 140.90766(2)
   density: 6.773
@@ -831,7 +831,7 @@ elements:
   symbol: "Nd"
   element: "Neodymium"
   origin: "the Greek <i>neos didymos</i> meaning 'new twin'"
-#  group: "-"
+  group: -6 # not a group, but used as coordinates in the UI grid
   period: 6
   weight: 144.242(3)<sup id="cite_ref-fn2_9-27" class="reference"><a href="#cite_note-fn2-9">[III]</sup>
   density: 7.007

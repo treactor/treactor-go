@@ -1,17 +1,18 @@
-package chem
+package element
 
 import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+	"strings"
 )
 
 type element struct {
-	Number    int    `yaml:"number"`
+	Number    int32    `yaml:"number"`
 	Symbol    string `yaml:"symbol"`
 	Element   string `yaml:"element"`
-	Group     int    `yaml:"group"`
-	Period    int    `yaml:"period"`
+	Group     int32    `yaml:"group"`
+	Period    int32    `yaml:"period"`
 	Weight    string `yaml:"weight"`
 	Density   string `yaml:"density"`
 	Melt      string `yaml:"melt"`
@@ -38,24 +39,25 @@ func readElements() elements {
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
-
 	return e
 }
 
 type Atom struct {
 	Name   string
 	Symbol string
-	Number int
-	Period int
-	Group  int
+	Number int32
+	Period int32
+	Group  int32
 }
 
 type Atoms struct {
-	Symbols map[string]Atom
+	ElementByName   map[string]Atom
+	ElementByNumber map[int32]Atom
 }
 
 func (a *Atoms) read() {
-	a.Symbols = make(map[string]Atom)
+	a.ElementByName = make(map[string]Atom)
+	a.ElementByNumber = make(map[int32]Atom)
 	elements := readElements()
 
 	for _, e := range elements.Elements {
@@ -66,7 +68,8 @@ func (a *Atoms) read() {
 			Period: e.Period,
 			Group:  e.Group,
 		}
-		a.Symbols[e.Symbol] = atom
+		a.ElementByName[strings.ToLower(e.Symbol)] = atom
+		a.ElementByNumber[e.Number] = atom
 	}
 }
 

@@ -1,12 +1,14 @@
 package execute
 
 import (
-	"encoding/json"
 	"fmt"
+	treactorpb "github.com/treactor/treactor-go/io/treactor/v1alpha"
 	"github.com/treactor/treactor-go/pkg/resource"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/net/context"
+	"google.golang.org/protobuf/encoding/protojson"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptrace"
 	"strconv"
@@ -15,15 +17,9 @@ import (
 	"unicode"
 )
 
-type Capture struct {
-	Name    string            `json:"name,omitempty"`
-	Headers map[string]string `json:"headers,omitempty"`
-	Bonds   []Capture         `json:"bonds,omitempty"`
-}
-
 type Plan interface {
 	String() string
-	Execute(ctx context.Context, channel chan Capture)
+	Execute(ctx context.Context, channel chan *treactorpb.Bond)
 	Calls() int
 }
 
@@ -38,23 +34,23 @@ func (o *Block) isAtom() bool {
 	return unicode.IsLetter(rune(o.Block[0]))
 }
 
-func (o *Block) callElement(ctx context.Context, wg *sync.WaitGroup, channel chan Capture) {
+func (o *Block) callElement(ctx context.Context, wg *sync.WaitGroup, channel chan  *treactorpb.Bond) {
 	defer wg.Done()
 	// If REACTOR_TRACE_INTERNAL=1 add internal spans
 	ctx, span := otel.Tracer("").Start(ctx, "Block [callElement]")
 	defer span.End()
-	CallElement(ctx, channel, o.Block)
+	CallElementResource(ctx, channel, o.Block)
 }
 
-func (o *Block) callBond(ctx context.Context, wg *sync.WaitGroup, channel chan Capture) {
+func (o *Block) callBond(ctx context.Context, wg *sync.WaitGroup, channel chan  *treactorpb.Bond) {
 	defer wg.Done()
 	// If REACTOR_TRACE_INTERNAL=1 add internal spans
 	ctx, span := otel.Tracer("").Start(ctx, "Block [callBond]")
 	defer span.End()
-	CallBond(ctx, channel, o.Block)
+	CallBondResource(ctx, channel, o.Block)
 }
 
-func (o *Block) Execute(ctx context.Context, channel chan Capture) {
+func (o *Block) Execute(ctx context.Context, channel chan  *treactorpb.Bond) {
 	// If REACTOR_TRACE_INTERNAL=1 add internal spans
 	ctx, span := otel.Tracer("").Start(ctx, "Execute Block")
 	defer span.End()
@@ -100,7 +96,7 @@ type Operator struct {
 	operand Token
 }
 
-func (o *Operator) Execute(ctx context.Context, channel chan Capture) {
+func (o *Operator) Execute(ctx context.Context, channel chan  *treactorpb.Bond) {
 	// If REACTOR_TRACE_INTERNAL=1 add internal spans
 	ctx, span := otel.Tracer("").Start(ctx, "Execute Operator")
 	defer span.End()
@@ -122,7 +118,7 @@ func (o *Operator) Calls() int {
 	return o.left.Calls() + o.right.Calls()
 }
 
-func (o *Operator) execute(ctx context.Context, wg *sync.WaitGroup, channel chan Capture, plan Plan) {
+func (o *Operator) execute(ctx context.Context, wg *sync.WaitGroup, channel chan  *treactorpb.Bond, plan Plan) {
 	defer wg.Done()
 	ctx, span := otel.Tracer("").Start(ctx, "Operator [execute]")
 	defer span.End()
@@ -136,7 +132,7 @@ func (o *Operator) String() string {
 	return o.left.String() + "^" + o.right.String()
 }
 
-func CallBond(context context.Context, channel chan Capture, molecule string) {
+func CallBondResource(context context.Context, channel chan  *treactorpb.Bond, molecule string) {
 	next := resource.NextBond()
 	var url string
 	if resource.IsLocalMode() {
@@ -152,17 +148,23 @@ func CallBond(context context.Context, channel chan Capture, molecule string) {
 		return
 	}
 	defer ra.Body.Close()
-	decoder := json.NewDecoder(ra.Body)
-	var capture Capture
-	err = decoder.Decode(&capture)
+
+	bodyBytes, err := ioutil.ReadAll(ra.Body)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	channel <- capture
+	var node treactorpb.Node
+	protojson.Unmarshal(bodyBytes, &node)
+
+	var bond = &treactorpb.Bond{
+		Response: nil,
+		Node:     &node,
+	}
+	channel <- bond
 }
 
-func CallElement(context context.Context, channel chan Capture, symbol string) {
+func CallElementResource(context context.Context, channel chan  *treactorpb.Bond, symbol string) {
 	full := symbol
 	symbol = strings.Split(full, ",")[0]
 	var url string
@@ -179,12 +181,19 @@ func CallElement(context context.Context, channel chan Capture, symbol string) {
 		return
 	}
 	defer ra.Body.Close()
-	decoder := json.NewDecoder(ra.Body)
-	var capture Capture
-	err = decoder.Decode(&capture)
+
+	bodyBytes, err := ioutil.ReadAll(ra.Body)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	channel <- capture
+	var node treactorpb.Node
+	protojson.Unmarshal(bodyBytes, &node)
+
+	var bond = &treactorpb.Bond{
+		Response: nil,
+		Node:     &node,
+	}
+	channel <- bond
+
 }

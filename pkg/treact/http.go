@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/treactor/treactor-go/pkg/chem"
+	"google.golang.org/protobuf/encoding/protojson"
+
+	treactorpb "github.com/treactor/treactor-go/io/treactor/v1alpha"
+	"github.com/treactor/treactor-go/pkg/element"
 	"github.com/treactor/treactor-go/pkg/execute"
 	"github.com/treactor/treactor-go/pkg/resource"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -20,22 +23,29 @@ type ErrorResponse struct {
 }
 
 func executePlan(w http.ResponseWriter, r *http.Request, ctx context.Context, plan execute.Plan) {
-	ch := make(chan execute.Capture, plan.Calls())
+	ch := make(chan *treactorpb.Bond, plan.Calls())
 	plan.Execute(ctx, ch)
 
 	elems := len(ch)
-	capture := execute.Capture{
-		Name:    resource.AppName,
-		Headers: make(map[string]string, len(r.Header)),
-		Bonds:   make([]execute.Capture, elems),
+
+	node := &treactorpb.Node{
+		Name:      resource.AppName,
+		Version:   resource.AppVersion,
+		Framework: resource.Framework,
+		Request: &treactorpb.TReactorRequest{
+			Path:    r.RequestURI,
+			Headers: make(map[string]string, len(r.Header)),
+		},
+		Bonds: make([]*treactorpb.Bond, elems),
+		Atom:  nil,
 	}
 	for key, values := range r.Header {
-		capture.Headers[key] = strings.Join(values, "|")
+		node.Request.Headers[key] = strings.Join(values, "|")
 	}
 	for i := 0; i < elems; i++ {
-		capture.Bonds[i] = <-ch
+		node.Bonds[i] = <-ch
 	}
-	bytes, _ := json.MarshalIndent(capture, "", "\t")
+	bytes, _ := protojson.Marshal(node)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bytes)
 }
@@ -103,7 +113,7 @@ func TReactAtomHandle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	atom := resource.Atoms.Symbols[block.Block]
+	atom := resource.Atoms.ElementByName[strings.ToLower(block.Block)]
 
 	var mb []byte
 	if block.KV["mem"] != "" {
@@ -119,30 +129,78 @@ func TReactAtomHandle(w http.ResponseWriter, r *http.Request) {
 	)
 
 	resource.Logger.InfoF(r.Context(), "Atom %s (%d)", atom.Name, atom.Number)
-	capture := execute.Capture{
-		Name:    resource.AppName,
-		Headers: make(map[string]string, len(r.Header)),
+
+	node := &treactorpb.Node{
+		Name:      resource.AppName,
+		Version:   resource.AppVersion,
+		Framework: resource.Framework,
+		Request: &treactorpb.TReactorRequest{
+			Path:    r.RequestURI,
+			Headers: make(map[string]string, len(r.Header)),
+		},
+		Bonds: nil,
+		Atom:  &treactorpb.Atom{
+			Number: resource.Number,
+			Symbol: atom.Symbol,
+			Name:   atom.Name,
+			Period: &atom.Period,
+			Group:  &atom.Group,
+		},
 	}
 	for key, values := range r.Header {
-		capture.Headers[key] = strings.Join(values, "|")
+		node.Request.Headers[key] = strings.Join(values, "|")
 	}
-	bytes, _ := json.MarshalIndent(capture, "", "\t")
+
+	bytes, _ := protojson.Marshal(node)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bytes)
 	_ = mb
+}
+
+func TReactAboutHandle(w http.ResponseWriter, r *http.Request) {
+	_, span := resource.Tracer.Start(r.Context(), "TReactAboutHandle")
+	defer span.End()
+
+	atom := resource.Atoms.ElementByNumber[resource.Number]
+
+	node := &treactorpb.Node{
+		Name:      resource.AppName,
+		Version:   resource.AppVersion,
+		Framework: resource.Framework,
+		Request: &treactorpb.TReactorRequest{
+			Path:    r.RequestURI,
+			Headers: make(map[string]string, len(r.Header)),
+		},
+		Bonds: nil,
+		Atom:  &treactorpb.Atom{
+			Number: resource.Number,
+			Symbol: atom.Symbol,
+			Name:   atom.Name,
+			Period: &atom.Period,
+			Group:  &atom.Group,
+		},
+	}
+	for key, values := range r.Header {
+		node.Request.Headers[key] = strings.Join(values, "|")
+	}
+
+	bytes, _ := protojson.Marshal(node)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(bytes)
 }
 
 func ReactorHealthz(_ http.ResponseWriter, _ *http.Request) {
 }
 
 func Serve() {
-	atoms := chem.NewAtoms()
+	atoms := element.NewAtoms()
 
 	fmt.Printf("Telemetry Reactor (%s:%s) listening on port %s\n", resource.AppName, resource.AppVersion, resource.Port)
 	fmt.Printf("Mode: %s\n", resource.Mode)
 
 	r := http.NewServeMux()
 	r.HandleFunc("/healthz", ReactorHealthz)
+	r.HandleFunc(fmt.Sprintf("%s/about/", resource.Base), TReactAboutHandle)
 	r.HandleFunc(fmt.Sprintf("%s/split", resource.Base), TReactSplitHandle)
 	r.HandleFunc(fmt.Sprintf("%s/bond/1", resource.Base), TReactBondHandle)
 	r.HandleFunc(fmt.Sprintf("%s/bond/2", resource.Base), TReactBondHandle)
@@ -150,7 +208,7 @@ func Serve() {
 	r.HandleFunc(fmt.Sprintf("%s/bond/4", resource.Base), TReactBondHandle)
 	r.HandleFunc(fmt.Sprintf("%s/bond/5", resource.Base), TReactBondHandle)
 	r.HandleFunc(fmt.Sprintf("%s/bond/n", resource.Base), TReactBondHandle)
-	for sym := range atoms.Symbols {
+	for sym := range atoms.ElementByName {
 		r.HandleFunc(fmt.Sprintf("%s/atom/%s", resource.Base, strings.ToLower(sym)), TReactAtomHandle)
 	}
 	http.Handle("/", r)

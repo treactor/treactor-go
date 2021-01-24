@@ -1,18 +1,18 @@
 package resource
 
 import (
-	"github.com/treactor/treactor-go/pkg/chem"
+	"github.com/treactor/treactor-go/pkg/element"
 )
 
 var (
 	Logger RLogger
 )
 
-var Atoms *chem.Atoms
+var Atoms *element.Atoms
 
 func Init() {
 	initTelemetry()
 	clientInit()
 	Logger = NewSLogger("")
-	Atoms = chem.NewAtoms()
+	Atoms = element.NewAtoms()
 }

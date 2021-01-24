@@ -2,12 +2,14 @@ package resource
 
 import (
 	"os"
+	"strconv"
 )
 
 var (
 	Port       string
 	AppVersion string
 	AppName    string
+	Framework  string
 
 	OtlpEndpoint string
 
@@ -18,6 +20,7 @@ var (
 	MaxBond          int
 	tracePropagation string
 	logMethod        string
+	Number           int32
 )
 
 func getEnv(key, fallback string) string {
@@ -31,11 +34,15 @@ func Configure() {
 	Port = getEnv("PORT", "3330")
 	AppName = getEnv("SERVICE_NAME", "treactor")
 	AppVersion = getEnv("SERVICE_VERSION", "0.0")
+	Framework = "golang"
 	// Reactor Specific Settings
 	Mode = getEnv("TREACTOR_MODE", "local")
 	// Reactor Fixed Settings
 	Base = "/treact"
 	MaxBond = 5
+
+	n, _ := strconv.Atoi(getEnv("TREACTOR_NUMBER", "0"))
+	Number = int32(n)
 
 	OtlpEndpoint = getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "")
 
