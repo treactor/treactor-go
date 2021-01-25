@@ -133,13 +133,7 @@ func (o *Operator) String() string {
 }
 
 func CallBondResource(context context.Context, channel chan  *treactorpb.Bond, molecule string) {
-	next := resource.NextBond()
-	var url string
-	if resource.IsLocalMode() {
-		url = fmt.Sprintf("http://localhost:%s%s/bond/%s?molecule=%s", resource.Port, resource.Base, next, molecule)
-	} else {
-		url = fmt.Sprintf("http://bond-%s%s/bond/%s?molecule=%s", next, resource.Base, next, molecule)
-	}
+	url := resource.MoleculeUrl(molecule)
 	context = httptrace.WithClientTrace(context, otelhttptrace.NewClientTrace(context))
 	req, _ := http.NewRequestWithContext(context, "GET", url, nil)
 	ra, err := resource.HttpClient.Do(req)
