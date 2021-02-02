@@ -200,16 +200,15 @@ func Serve() {
 
 	r := http.NewServeMux()
 	r.HandleFunc("/healthz", ReactorHealthz)
-	r.HandleFunc(fmt.Sprintf("%s/about/", resource.Base), TReactAboutHandle)
-	r.HandleFunc(fmt.Sprintf("%s/split", resource.Base), TReactSplitHandle)
-	r.HandleFunc(fmt.Sprintf("%s/bond/1", resource.Base), TReactBondHandle)
-	r.HandleFunc(fmt.Sprintf("%s/bond/2", resource.Base), TReactBondHandle)
-	r.HandleFunc(fmt.Sprintf("%s/bond/3", resource.Base), TReactBondHandle)
-	r.HandleFunc(fmt.Sprintf("%s/bond/4", resource.Base), TReactBondHandle)
-	r.HandleFunc(fmt.Sprintf("%s/bond/5", resource.Base), TReactBondHandle)
-	r.HandleFunc(fmt.Sprintf("%s/bond/n", resource.Base), TReactBondHandle)
+	r.HandleFunc(fmt.Sprintf("%s/nodes/%d/health", resource.Base, resource.Number), ReactorHealthz)
+	r.HandleFunc(fmt.Sprintf("%s/nodes/%d/info", resource.Base, resource.Number), TReactAboutHandle)
+	r.HandleFunc(fmt.Sprintf("%s/reactions", resource.Base), TReactSplitHandle)
+	for i := 1; i <= resource.MaxBond; i++ {
+		r.HandleFunc(fmt.Sprintf("%s/bonds/%d", resource.Base, i), TReactBondHandle)
+	}
+	r.HandleFunc(fmt.Sprintf("%s/bonds/n", resource.Base), TReactBondHandle)
 	for sym := range atoms.ElementByName {
-		r.HandleFunc(fmt.Sprintf("%s/atom/%s", resource.Base, strings.ToLower(sym)), TReactAtomHandle)
+		r.HandleFunc(fmt.Sprintf("%s/atoms/%s", resource.Base, strings.ToLower(sym)), TReactAtomHandle)
 	}
 	http.Handle("/", r)
 

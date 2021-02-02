@@ -163,9 +163,9 @@ func CallElementResource(context context.Context, channel chan  *treactorpb.Bond
 	symbol = strings.Split(full, ",")[0]
 	var url string
 	if resource.IsLocalMode() {
-		url = fmt.Sprintf("http://localhost:%s%s/atom/%s?symbol=%s", resource.Port, resource.Base, symbol, full)
+		url = fmt.Sprintf("http://localhost:%s%s/atoms/%s?symbol=%s", resource.Port, resource.Base, symbol, full)
 	} else {
-		url = fmt.Sprintf("http://atom-%s%s/atom/%s?symbol=%s", strings.ToLower(symbol), resource.Base, strings.ToLower(symbol), full)
+		url = fmt.Sprintf("http://atom-%s%s/atoms/%s?symbol=%s", strings.ToLower(symbol), resource.Base, strings.ToLower(symbol), full)
 	}
 	context = httptrace.WithClientTrace(context, otelhttptrace.NewClientTrace(context))
 	req, _ := http.NewRequestWithContext(context, "GET", url, nil)

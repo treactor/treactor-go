@@ -69,18 +69,18 @@ func MoleculeUrl(molecule string) string {
 	if Mode == "cluster" {
 		if Module == "bond" {
 			if Component == "n" {
-				return fmt.Sprintf("http://bond-n/treact/bond/n?molecule=%s&execute=1", molecule)
+				return fmt.Sprintf("http://bond-n/treact/bonds/n?molecule=%s&execute=1", molecule)
 			}
 			next,_ := strconv.Atoi(Component)
 			next++
 			if next > MaxBond {
-				return fmt.Sprintf("http://bond-n/treact/bond/n?molecule=%s&execute=1", molecule)
+				return fmt.Sprintf("http://bond-n/treact/bonds/n?molecule=%s&execute=1", molecule)
 			}
-			return fmt.Sprintf("http://bond-%d/treact/bond/%d?molecule=%s&execute=1", next, next, molecule)
+			return fmt.Sprintf("http://bond-%d/treact/bonds/%d?molecule=%s&execute=1", next, next, molecule)
 		}
-		return fmt.Sprintf("http://bond-1/treact/bond/1?molecule=%s&execute=1", molecule)
+		return fmt.Sprintf("http://bond-1/treact/bonds/1?molecule=%s&execute=1", molecule)
 	} else {
-		return fmt.Sprintf("http://localhost:%s/treact/bond/n?molecule=%s&execute=1", Port, molecule)
+		return fmt.Sprintf("http://localhost:%s/treact/bonds/n?molecule=%s&execute=1", Port, molecule)
 	}
 }
 
