@@ -1667,3 +1667,115 @@ elements:
 #  diatomic_nonmetal: Diatomic nonmetal
 #  noble_gas: Noble gas
 #  unknown: Unknown
+- number: 500
+  symbol: "Ui"
+  element: "Userium"
+  origin: "Telemetry Reactor"
+  group: 18
+  period: 7
+  weight: "[294]"
+  density: (5.0)
+  melt: –
+  boil: (350)
+  C: "–"
+  X: "–"
+  abundance: 0
+  property: "unknown"
+- number: 501
+  symbol: "Ai"
+  element: "Apium"
+  origin: "Telemetry Reactor"
+  group: 18
+  period: 7
+  weight: "[294]"
+  density: (5.0)
+  melt: –
+  boil: (350)
+  C: "–"
+  X: "–"
+  abundance: 0
+  property: "unknown"
+- number: 201
+  symbol: "Bo"
+  element: "Boneium"
+  origin: "Telemetry Reactor"
+  group: 18
+  period: 7
+  weight: "[294]"
+  density: (5.0)
+  melt: –
+  boil: (350)
+  C: "–"
+  X: "–"
+  abundance: 0
+  property: "unknown"
+- number: 202
+  symbol: "Bw"
+  element: "Bontwoium"
+  origin: "Telemetry Reactor"
+  group: 18
+  period: 7
+  weight: "[294]"
+  density: (5.0)
+  melt: –
+  boil: (350)
+  C: "–"
+  X: "–"
+  abundance: 0
+  property: "unknown"
+- number: 203
+  symbol: "Bt"
+  element: "Bontreium"
+  origin: "Telemetry Reactor"
+  group: 18
+  period: 7
+  weight: "[294]"
+  density: (5.0)
+  melt: –
+  boil: (350)
+  C: "–"
+  X: "–"
+  abundance: 0
+  property: "unknown"
+- number: 204
+  symbol: "Bu"
+  element: "Bonfourium"
+  origin: "Telemetry Reactor"
+  group: 18
+  period: 7
+  weight: "[294]"
+  density: (5.0)
+  melt: –
+  boil: (350)
+  C: "–"
+  X: "–"
+  abundance: 0
+  property: "unknown"
+- number: 205
+  symbol: "Bf"
+  element: "Bonfiveium"
+  origin: "Telemetry Reactor"
+  group: 18
+  period: 7
+  weight: "[294]"
+  density: (5.0)
+  melt: –
+  boil: (350)
+  C: "–"
+  X: "–"
+  abundance: 0
+  property: "unknown"
+- number: 299
+  symbol: "Bn"
+  element: "Bonium"
+  origin: "Telemetry Reactor"
+  group: 18
+  period: 7
+  weight: "[294]"
+  density: (5.0)
+  melt: –
+  boil: (350)
+  C: "–"
+  X: "–"
+  abundance: 0
+  property: "unknown"

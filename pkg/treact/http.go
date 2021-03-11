@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	treactorpb "github.com/treactor/treactor-go/io/treactor/v1alpha"
@@ -11,7 +12,6 @@ import (
 	"github.com/treactor/treactor-go/pkg/execute"
 	"github.com/treactor/treactor-go/pkg/resource"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"go.opentelemetry.io/otel/label"
 	trace "go.opentelemetry.io/otel/trace"
 	"log"
 	"net/http"
@@ -62,12 +62,8 @@ func failure(ctx context.Context, w http.ResponseWriter, r *http.Request, messag
 }
 
 func TReactSplitHandle(w http.ResponseWriter, r *http.Request) {
-	ctx, span := resource.Tracer.Start(r.Context(), "TReactSplitHandle", trace.WithAttributes(label.KeyValue{
-		Key: "x",
-		Value: label.Value{
-
-		},
-	}))
+	ctx, span := resource.Tracer.Start(r.Context(), "TReactSplitHandle", trace.WithAttributes(
+		attribute.String("x", "foo")))
 	defer span.End()
 	//_, span := trace.StartSpan(r.Context(), "split.Get")
 	//defer span.End()
@@ -139,7 +135,7 @@ func TReactAtomHandle(w http.ResponseWriter, r *http.Request) {
 			Headers: make(map[string]string, len(r.Header)),
 		},
 		Bonds: nil,
-		Atom:  &treactorpb.Atom{
+		Atom: &treactorpb.Atom{
 			Number: resource.Number,
 			Symbol: atom.Symbol,
 			Name:   atom.Name,
@@ -172,7 +168,7 @@ func TReactAboutHandle(w http.ResponseWriter, r *http.Request) {
 			Headers: make(map[string]string, len(r.Header)),
 		},
 		Bonds: nil,
-		Atom:  &treactorpb.Atom{
+		Atom: &treactorpb.Atom{
 			Number: resource.Number,
 			Symbol: atom.Symbol,
 			Name:   atom.Name,
