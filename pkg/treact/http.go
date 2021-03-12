@@ -153,8 +153,8 @@ func TReactAtomHandle(w http.ResponseWriter, r *http.Request) {
 	_ = mb
 }
 
-func TReactAboutHandle(w http.ResponseWriter, r *http.Request) {
-	_, span := resource.Tracer.Start(r.Context(), "TReactAboutHandle")
+func TReactInfoHandle(w http.ResponseWriter, r *http.Request) {
+	_, span := resource.Tracer.Start(r.Context(), "TReactInfoHandle")
 	defer span.End()
 
 	atom := resource.Atoms.ElementByNumber[resource.Number]
@@ -185,7 +185,85 @@ func TReactAboutHandle(w http.ResponseWriter, r *http.Request) {
 	w.Write(bytes)
 }
 
-func ReactorHealthz(_ http.ResponseWriter, _ *http.Request) {
+func TReactReactionsHandle(w http.ResponseWriter, r *http.Request) {
+	_, span := resource.Tracer.Start(r.Context(), "TReactReactionsHandle")
+	defer span.End()
+
+	node := &treactorpb.Node{
+		Name:      resource.AppName,
+		Version:   resource.AppVersion,
+		Framework: resource.Framework,
+		Request: &treactorpb.TReactorRequest{
+			Path:    r.RequestURI,
+			Headers: make(map[string]string, len(r.Header)),
+		},
+	}
+	for key, values := range r.Header {
+		node.Request.Headers[key] = strings.Join(values, "|")
+	}
+
+	url := r.URL
+	molecule := url.Query().Get("molecule")
+	if len(molecule) < 3 {
+		/*
+		   		        axios.get<any, AxiosResponse<Node>>(Config.atomUrl(molecule)).then(
+		                  function (result) {
+		                      let response: TReactorResponse = {
+		                          statusCode: result.status,
+		                          statusMessage: result.statusText,
+		                          headers: extractHeadersFromResponse(result)
+		                      }
+		                      let bond: Bond = {
+		                          response: response,
+		                          node: result.data
+		                      }
+		                      node.bonds.push(bond)
+		                      res.send(node)
+		                  }
+		              ).catch(
+		                  function (result) {
+		                      res.status(502)
+		                      res.send(result)
+		                  }
+		              )
+
+		*/
+	} else {
+		/*
+		   axios.get<any, AxiosResponse<Node>>(Config.moleculeUrl(molecule)).then(
+		       function (result) {
+		           let response: TReactorResponse = {
+		               statusCode: result.status,
+		               statusMessage: result.statusText,
+		               headers: extractHeadersFromResponse(result)
+		           }
+		           let bond: Bond = {
+		               response: response,
+		               node: result.data
+		           }
+		           node.bonds.push(bond)
+		           res.send(node)
+		       }
+		   ).catch(
+		       function (result) {
+		           res.status(502)
+		           res.send(result)
+		       }
+		   )
+		*/
+	}
+	bytes, _ := protojson.Marshal(node)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(bytes)
+}
+
+func TReactorHealthz(_ http.ResponseWriter, _ *http.Request) {
+}
+
+// You can have a catch all tracer on the route, but it's better to instrument the handlers separate
+func instrumentedGet(mux *http.ServeMux, route string, handleFunction func(w http.ResponseWriter, r *http.Request)) {
+	fullRoute := fmt.Sprintf("%s%s", resource.Base, route)
+	mux.Handle(fullRoute, otelhttp.NewHandler(http.HandlerFunc(handleFunction), fmt.Sprintf("GET %s", fullRoute)))
 }
 
 func Serve() {
@@ -195,19 +273,18 @@ func Serve() {
 	fmt.Printf("Mode: %s\n", resource.Mode)
 
 	r := http.NewServeMux()
-	r.HandleFunc("/healthz", ReactorHealthz)
-	r.HandleFunc(fmt.Sprintf("%s/nodes/%d/health", resource.Base, resource.Number), ReactorHealthz)
-	r.HandleFunc(fmt.Sprintf("%s/nodes/%d/info", resource.Base, resource.Number), TReactAboutHandle)
-	r.HandleFunc(fmt.Sprintf("%s/reactions", resource.Base), TReactSplitHandle)
+	r.HandleFunc("/healthz", TReactorHealthz)
+	instrumentedGet(r, fmt.Sprintf("/nodes/%d/health", resource.Number), TReactorHealthz)
+	instrumentedGet(r, fmt.Sprintf("/nodes/%d/info", resource.Number), TReactInfoHandle)
+	instrumentedGet(r, "/reactions", TReactSplitHandle)
 	for i := 1; i <= resource.MaxBond; i++ {
-		r.HandleFunc(fmt.Sprintf("%s/bonds/%d", resource.Base, i), TReactBondHandle)
+		instrumentedGet(r, fmt.Sprintf("/bonds/%d", i), TReactBondHandle)
 	}
-	r.HandleFunc(fmt.Sprintf("%s/bonds/n", resource.Base), TReactBondHandle)
+	instrumentedGet(r, "/bonds/n", TReactBondHandle)
 	for sym := range atoms.ElementByName {
-		r.HandleFunc(fmt.Sprintf("%s/atoms/%s", resource.Base, strings.ToLower(sym)), TReactAtomHandle)
+		instrumentedGet(r, fmt.Sprintf("/atoms/%s", strings.ToLower(sym)), TReactAtomHandle)
 	}
 	http.Handle("/", r)
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", resource.Port), otelhttp.NewHandler(
-		r, "TReact")))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", resource.Port), r))
 }

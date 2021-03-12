@@ -53,7 +53,7 @@ func initTracer(exporter exporttrace.SpanExporter, rs *resource.Resource) {
 
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
-	Tracer = otel.Tracer("")
+	Tracer = otel.GetTracerProvider().Tracer("io.treactor.tracing.golang", trace.WithInstrumentationVersion("0.5"))
 }
 
 func initMetrics(_ exportmetric.Exporter, _ *resource.Resource) {

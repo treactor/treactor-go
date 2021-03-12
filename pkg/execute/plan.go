@@ -5,7 +5,6 @@ import (
 	treactorpb "github.com/treactor/treactor-go/io/treactor/v1alpha"
 	"github.com/treactor/treactor-go/pkg/resource"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
-	"go.opentelemetry.io/otel"
 	"golang.org/x/net/context"
 	"google.golang.org/protobuf/encoding/protojson"
 	"io/ioutil"
@@ -37,7 +36,7 @@ func (o *Block) isAtom() bool {
 func (o *Block) callElement(ctx context.Context, wg *sync.WaitGroup, channel chan  *treactorpb.Bond) {
 	defer wg.Done()
 	// If REACTOR_TRACE_INTERNAL=1 add internal spans
-	ctx, span := otel.Tracer("").Start(ctx, "Block [callElement]")
+	ctx, span := resource.Tracer.Start(ctx, "Block [callElement]")
 	defer span.End()
 	CallElementResource(ctx, channel, o.Block)
 }
@@ -45,14 +44,14 @@ func (o *Block) callElement(ctx context.Context, wg *sync.WaitGroup, channel cha
 func (o *Block) callBond(ctx context.Context, wg *sync.WaitGroup, channel chan  *treactorpb.Bond) {
 	defer wg.Done()
 	// If REACTOR_TRACE_INTERNAL=1 add internal spans
-	ctx, span := otel.Tracer("").Start(ctx, "Block [callBond]")
+	ctx, span := resource.Tracer.Start(ctx, "Block [callBond]")
 	defer span.End()
 	CallBondResource(ctx, channel, o.Block)
 }
 
 func (o *Block) Execute(ctx context.Context, channel chan  *treactorpb.Bond) {
 	// If REACTOR_TRACE_INTERNAL=1 add internal spans
-	ctx, span := otel.Tracer("").Start(ctx, "Execute Block")
+	ctx, span := resource.Tracer.Start(ctx, "Execute Block")
 	defer span.End()
 	wg := sync.WaitGroup{}
 	wg.Add(o.times)
@@ -98,7 +97,7 @@ type Operator struct {
 
 func (o *Operator) Execute(ctx context.Context, channel chan  *treactorpb.Bond) {
 	// If REACTOR_TRACE_INTERNAL=1 add internal spans
-	ctx, span := otel.Tracer("").Start(ctx, "Execute Operator")
+	ctx, span := resource.Tracer.Start(ctx, "Execute Operator")
 	defer span.End()
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -120,7 +119,7 @@ func (o *Operator) Calls() int {
 
 func (o *Operator) execute(ctx context.Context, wg *sync.WaitGroup, channel chan  *treactorpb.Bond, plan Plan) {
 	defer wg.Done()
-	ctx, span := otel.Tracer("").Start(ctx, "Operator [execute]")
+	ctx, span := resource.Tracer.Start(ctx, "Operator [execute]")
 	defer span.End()
 	plan.Execute(ctx, channel)
 }
